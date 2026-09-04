@@ -4,7 +4,7 @@ Synthetic wine network. Not Treasury Wine Estates.
 
 ## If you have one minute
 
-1. Open the Streamlit cockpit (local: `streamlit run src/app.py`, or the Streamlit Cloud URL in the README).
+1. Open the Streamlit cockpit: [https://supply-intelligence-tkkqjhmezc4adxhf6aeppv.streamlit.app/](https://supply-intelligence-tkkqjhmezc4adxhf6aeppv.streamlit.app/) (local: `streamlit run src/app.py`).
 2. Read the KPI strip: planted problems 3/3, naive WAPE vs ETS, synthetic $ at risk.
 3. Open **S&OP brief**. Amber means commentary. Blue means calculated. Nothing on that page executes a supply action.
 

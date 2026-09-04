@@ -6,6 +6,9 @@ Fictional company: **Vintara Estates**. Synthetic data. Not Treasury Wine Estate
 
 Every number is calculated. AI commentary is labelled, cited, and never executed as a supply action. There is no chatbot.
 
+**Live cockpit:** [https://supply-intelligence-tkkqjhmezc4adxhf6aeppv.streamlit.app/](https://supply-intelligence-tkkqjhmezc4adxhf6aeppv.streamlit.app/)  
+**Code:** [https://github.com/ChampagneFooty/supply-intelligence](https://github.com/ChampagneFooty/supply-intelligence)
+
 **New agent:** read `CLAUDE.md` first. Hiring-manager path: `docs/demo_script.md`. Tim’s Day 1 explainer: `Vintara Supply Insights - Day 1 Explainer.docx`.
 
 ---
@@ -18,7 +21,7 @@ Every number is calculated. AI commentary is labelled, cited, and never executed
 | Day 1 — engine + `insight_pack.json` + tests | Complete. P1–P3 detected. |
 | Day 2 — Streamlit + cached brief + Power BI | Complete. |
 | Power BI file | `powerbi/Supply Intelligence.pbix` (Tim, Desktop) |
-| Public Streamlit URL | GitHub + Streamlit Community Cloud. Main file: `src/app.py` |
+| Public Streamlit URL | [Live app](https://supply-intelligence-tkkqjhmezc4adxhf6aeppv.streamlit.app/) — `src/app.py` on Streamlit Community Cloud |
 
 **Pack headlines:** seasonal-naive WAPE ~4.7%; ETS WAPE ~27% (naive wins on this seasonal network); harvest intake **0.70** on 2026 weeks 10–14; synthetic value-at-risk in the pack; 7 pytest checks.
 
@@ -42,14 +45,9 @@ Open Power BI: `powerbi/Supply Intelligence.pbix`. Refresh from `outputs/powerbi
 
 ### Streamlit Community Cloud
 
-This is the presentation URL. No API key. The app reads committed `outputs/insight_pack.json`, `outputs/briefing.json`, and `outputs/powerbi/*.csv`.
+Presentation URL (no API key): [https://supply-intelligence-tkkqjhmezc4adxhf6aeppv.streamlit.app/](https://supply-intelligence-tkkqjhmezc4adxhf6aeppv.streamlit.app/)
 
-1. Repo on GitHub (public is simplest).
-2. Sign in at [share.streamlit.io](https://share.streamlit.io) with the same GitHub account.
-3. **Create app** → this repository → branch `main` → main file `src/app.py`.
-4. Deploy. Python version is pinned in `runtime.txt` (3.12).
-
-Paste the `*.streamlit.app` URL into this README and into `docs/demo_script.md` once it is live.
+The app reads committed `outputs/insight_pack.json`, `outputs/briefing.json`, and `outputs/powerbi/*.csv`. Redeploy from [share.streamlit.io](https://share.streamlit.io) if the GitHub repo changes. Main file: `src/app.py`. Python version is pinned in `runtime.txt` (3.12).
 
 ---
 

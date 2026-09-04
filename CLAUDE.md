@@ -16,7 +16,7 @@ Owner: Tim Raspe. Plain English with Tim. Do not invent metrics. Do not treat sy
 | Cached S&OP brief | Complete. `outputs/briefing.md` / `briefing.json`. No API key. |
 | Streamlit cockpit | Complete. `streamlit run src/app.py` |
 | Power BI Desktop report | Complete. Tim built it. File: `powerbi/Supply Intelligence.pbix` |
-| Streamlit Cloud public URL | Not published. Needs Tim’s Streamlit account. |
+| Streamlit Cloud public URL | https://supply-intelligence-tkkqjhmezc4adxhf6aeppv.streamlit.app/ |
 | TWE application documents | Not this repo’s job unless Tim asks. Resume live workspace is `Cursor Agents\Resume\`. |
 
 **Do not reopen Day 1/2 architecture.** Do not add agents, FastAPI, extra ML, approval queues, or a chatbot.
@@ -104,4 +104,4 @@ New-release Chardonnay (B03) has a planted **25%** forecast over-bias.
 
 - Workspace root must be this folder.
 - Read this file + `README.md`. Do not rebuild the engine or the `.pbix` unprompted.
-- Next work is only what Tim asks: Cloud deploy, TWE resume/letter (in **Resume** repo), PBI polish, or a small engine fix.
+- Next work is only what Tim asks: TWE resume/letter (in **Resume** repo), PBI polish, or a small engine fix.
