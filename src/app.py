@@ -20,10 +20,30 @@ from src import OUTPUTS, POWERBI
 from src.generate import load_yaml
 
 SHOCKS = {
-    "P1": {"title": "Barossa harvest −30%", "weeks": (10, 14)},
-    "P2": {"title": "UK Reserve Shiraz +40%", "weeks": (20, 24)},
-    "P3": {"title": "Barossa bottling −35%", "weeks": (32, 35)},
-    "BIAS": {"title": "New-release Chardonnay over-forecast", "weeks": (1, 52)},
+    "P1": {
+        "title": "Barossa harvest −30%",
+        "weeks": (10, 14),
+        "jump": "Barossa, weeks 10–14",
+        "why": "We cut Barossa intake 30% in this window. The engine’s harvest exceptions live here.",
+    },
+    "P2": {
+        "title": "UK Reserve Shiraz +40%",
+        "weeks": (20, 24),
+        "jump": "Reserve Shiraz · UK, weeks 20–24",
+        "why": "We lifted UK demand 40% on Reserve Shiraz. Allocation shortfalls in the pack are this story.",
+    },
+    "P3": {
+        "title": "Barossa bottling −35%",
+        "weeks": (32, 35),
+        "jump": "Barossa, weeks 32–35",
+        "why": "We cut Barossa bottling capacity 35% in this window. Capacity-loss rows in the pack are this story.",
+    },
+    "BIAS": {
+        "title": "New-release Chardonnay over-forecast",
+        "weeks": (1, 52),
+        "jump": "Single Vineyard Chardonnay, full year",
+        "why": "We planted a 25% over-forecast on the new Chardonnay. Brand WAPE/bias on Planner is this story.",
+    },
 }
 
 RED = "#B11F24"
@@ -587,6 +607,15 @@ st.markdown(
         color: #C8C4BC; font-size: 0.88rem; letter-spacing: 0.04em;
         margin: 0.85rem 0 1.1rem 0;
     }
+    .shock-now {
+        border: 1px solid #B11F24;
+        background: #3A2A2C;
+        color: #F7F5F2;
+        padding: 12px 14px;
+        margin: 0.4rem 0 1.1rem 0;
+        font-size: 0.92rem;
+        line-height: 1.45;
+    }
     div[data-testid="stMetric"] {
         background: #242830; padding: 16px 16px 14px 16px;
         border: 1px solid #3E4450;
@@ -745,21 +774,37 @@ exec_tab, planner_tab, value_tab, brief_tab = st.tabs(
 )
 
 with exec_tab:
-    st.subheader("Planted problems")
-    st.caption("Select a shock to move the slice to that window.")
-    cards = st.columns(4)
-    for col, shock_id in zip(cards, ["P1", "P2", "P3", "BIAS"]):
+    st.subheader("Four planted stories")
+    st.caption(
+        "We planted four problems in the synthetic year. These are not live alerts. "
+        "Each button jumps the **planning slice** (weeks, and the site or brand/market that belongs to that story). "
+        "The exception table, network map colours in-slice, and slice $ at risk follow. "
+        "The four network KPIs at the top stay full-year. Use **Clear slice** in the sidebar to go back."
+    )
+    if shock in SHOCKS:
+        meta_now = SHOCKS[shock]
+        st.markdown(
+            f'<div class="shock-now"><strong>Slice is on {shock}.</strong> '
+            f"Filters are {meta_now['jump']}. Exception table and slice $ at risk follow this story. "
+            f"Network KPIs above stay full-year.</div>",
+            unsafe_allow_html=True,
+        )
+    for shock_id in ["P1", "P2", "P3", "BIAS"]:
         meta = SHOCKS[shock_id]
         detected = planted.get(shock_id, shock_id == "BIAS")
-        label = f"{shock_id} · {'Detected' if detected else 'Missed'}"
-        col.button(
-            label,
-            width="stretch",
-            help=f"{meta['title']} · weeks {meta['weeks'][0]}–{meta['weeks'][1]}",
-            on_click=_focus_shock,
-            args=(shock_id,),
-        )
-        col.caption(f"{meta['title']}\nWeeks {meta['weeks'][0]}–{meta['weeks'][1]}")
+        status = "Detected" if detected else "Missed"
+        on_this = shock == shock_id
+        with st.container(border=True):
+            st.markdown(f"**{shock_id} · {status}** — {meta['title']}")
+            st.caption(meta["why"])
+            st.button(
+                "On this story" if on_this else f"Jump slice · {meta['jump']}",
+                width="stretch",
+                key=f"shock_jump_{shock_id}",
+                type="primary" if on_this else "secondary",
+                on_click=_focus_shock,
+                args=(shock_id,),
+            )
 
     st.markdown("**Supply network**")
     st.caption(
