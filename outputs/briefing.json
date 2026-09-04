@@ -1,0 +1,180 @@
+{
+  "agent_id": "sop_insight",
+  "source": "insight_pack.json",
+  "generated_at": "2026-09-03T02:38:50.033930+00:00",
+  "mode": "cached_from_pack",
+  "requires_approval": true,
+  "human_gate": "No supply action is executed from this brief.",
+  "confidence": "medium",
+  "source_refs": [
+    {
+      "calc_id": "kpi:summary",
+      "path": "kpis.wape_seasonal_naive",
+      "value": 0.047484622401475794,
+      "display": "4.7%"
+    },
+    {
+      "calc_id": "kpi:summary",
+      "path": "kpis.wape_ets",
+      "value": 0.2737520714468122,
+      "display": "27.4%"
+    },
+    {
+      "calc_id": "kpi:summary",
+      "path": "kpis.bias_seasonal_naive",
+      "value": 0.0021153022819955015,
+      "display": "0.21%"
+    },
+    {
+      "calc_id": "kpi:summary",
+      "path": "kpis.bias_ets",
+      "value": 0.27181892153982706,
+      "display": "27.2%"
+    },
+    {
+      "calc_id": "kpi:summary",
+      "path": "kpis.value_at_risk_total",
+      "value": 510101.2819861078,
+      "display": "$510,101"
+    },
+    {
+      "calc_id": "kpi:summary",
+      "path": "kpis.exception_count",
+      "value": 176,
+      "display": "176"
+    },
+    {
+      "calc_id": "kpi:summary",
+      "path": "kpis.fill_rate_proxy",
+      "value": 0.9975961538461539,
+      "display": "99.76%"
+    },
+    {
+      "calc_id": "kpi:summary",
+      "path": "kpis.capacity_peak_utilisation",
+      "value": 1.0,
+      "display": "100.0%"
+    },
+    {
+      "calc_id": "planted",
+      "path": "planted.detected_count",
+      "value": 3,
+      "display": "3/3"
+    },
+    {
+      "calc_id": "scn:harvest_shortfall",
+      "path": "scenario.intake_shocked_over_baseline",
+      "value": 0.6999999999999998,
+      "display": "0.70"
+    },
+    {
+      "calc_id": "planning_year_actual_cases",
+      "path": "planning_year_actual_cases",
+      "value": 251690.85280759857,
+      "display": "251,691"
+    },
+    {
+      "calc_id": "mean_bulk_cover",
+      "path": "mean_bulk_cover",
+      "value": 19.9032724045662,
+      "display": "19.9"
+    },
+    {
+      "calc_id": "mean_allocation_ratio",
+      "path": "mean_allocation_ratio",
+      "value": 0.9693681318681319,
+      "display": "96.9%"
+    },
+    {
+      "calc_id": "acc:brand:seasonal_naive:B03:nan:nan",
+      "path": "accuracy_hierarchy.B03.seasonal_naive.bias",
+      "value": 0.25120142162734477,
+      "display": "25.1%"
+    },
+    {
+      "calc_id": "acc:brand:seasonal_naive:B03:nan:nan",
+      "path": "accuracy_hierarchy.B03.seasonal_naive.wape",
+      "value": 0.25120142162734477,
+      "display": "25.1%"
+    },
+    {
+      "calc_id": "val:planted:P1",
+      "path": "value_register.P1",
+      "value": 276626.5177106592,
+      "display": "$276,627"
+    },
+    {
+      "calc_id": "val:planted:other",
+      "path": "value_register.other",
+      "value": 207711.87449632518,
+      "display": "$207,712"
+    },
+    {
+      "calc_id": "val:planted:P2",
+      "path": "value_register.P2",
+      "value": 16367.892092616288,
+      "display": "$16,368"
+    },
+    {
+      "calc_id": "val:planted:P3",
+      "path": "value_register.P3",
+      "value": 9394.997686507239,
+      "display": "$9,395"
+    },
+    {
+      "calc_id": "val:planted:BIAS",
+      "path": "value_register.BIAS",
+      "value": 0.0,
+      "display": "$0"
+    },
+    {
+      "calc_id": "exc:type:harvest_shortfall",
+      "path": "exceptions.type.harvest_shortfall",
+      "value": 25,
+      "display": "25"
+    },
+    {
+      "calc_id": "exc:type:bulk_cover",
+      "path": "exceptions.type.bulk_cover",
+      "value": 113,
+      "display": "113"
+    },
+    {
+      "calc_id": "exc:type:allocation_shortfall",
+      "path": "exceptions.type.allocation_shortfall",
+      "value": 5,
+      "display": "5"
+    },
+    {
+      "calc_id": "exc:type:bottled_cover",
+      "path": "exceptions.type.bottled_cover",
+      "value": 2,
+      "display": "2"
+    },
+    {
+      "calc_id": "exc:type:capacity_loss",
+      "path": "exceptions.type.capacity_loss",
+      "value": 4,
+      "display": "4"
+    },
+    {
+      "calc_id": "exc:type:capacity_utilisation",
+      "path": "exceptions.type.capacity_utilisation",
+      "value": 26,
+      "display": "26"
+    },
+    {
+      "calc_id": "exc:type:forecast_bias",
+      "path": "exceptions.type.forecast_bias",
+      "value": 1,
+      "display": "1"
+    },
+    {
+      "calc_id": "exc:EXC0139",
+      "path": "exceptions.P2.min_allocation_ratio",
+      "value": 0.6571428571428571,
+      "display": "65.7%"
+    }
+  ],
+  "markdown": "# Vintara S&OP insight brief\n\n**Status:** Draft commentary. Human review required. No supply action is executed from this brief.\n\n**Mode:** cached_from_pack\n\n## What changed\n\nPlanning-year shipments are 251,691 cases. The engine raised 176 weekly exception rows and detected 3/3 planted supply problems.\n\nLast-year-same-week forecast error (WAPE) is 4.7%. ETS WAPE on a 52-week horizon is 27.4%. Naive bias is 0.21%; ETS bias is 27.2%. On this seasonal network the simple forecast is the one to use. Vintara Single Vineyard Chardonnay is the launch exception: seasonal-naive bias 25.1% after the 25% over-forecast we planted on the new vintage.\n\n## What is at risk\n\nSynthetic value at risk across the register is $510,101. Treat that as a ranking total, not a P&L. Mean bulk cover is 19.9 weeks. Mean allocation ratio is 96.9%. Bottled fill-rate proxy is 99.76%. Peak bottling utilisation is 100.0%.\n\nThree stories sit under that total:\n\n1. **Harvest (P1).** Barossa crush was taken at 0.70 of plan in weeks 10\u201314. Ranked synthetic value on P1 rows is $276,627. Action already on the register: REALLOCATE_BULK / PROTECT_LUXURY_ALLOCATION.\n2. **UK allocation (P2).** Vintara Reserve Shiraz unconstrained demand in the UK ran ahead of the frozen allocation. The tightest P2 allocation ratio is 65.7%. Ranked synthetic value on P2 rows is $16,368. Action: HOLD_UK_ALLOCATION_REVIEW.\n3. **Bottling line (P3).** Barossa capacity was cut in weeks 32\u201335. Ranked synthetic value on P3 rows is $9,395. Action: SHIFT_BOTTLING_WINDOW.\n\nWeekly exception counts by type are in the pack. Harvest shortfall rows: 25. Allocation shortfall rows: 5. Capacity-loss rows: 4.\n\n## What to decide\n\n- Do we protect luxury allocation off the short Barossa vintage, or hold the current market split?\n- Do we reopen UK allocation for Vintara Reserve Shiraz for weeks 20\u201324, or accept the service miss?\n- Do we move Barossa bottling out of weeks 32\u201335, or run the reduced line and take cover risk?\n- Do we reset the Vintara Single Vineyard Chardonnay forecast before the next cycle?\n\nThis proof of concept has delivered: Forecast accuracy, Exception detection. Next on the portfolio: Scenario analysis, Allocation cockpit, Harvest-risk digital twin.\n\n## Citations\n\nEvery figure above is copied from `insight_pack.json`. Calc IDs:\n\n- `kpis.wape_seasonal_naive` = 4.7% (`kpi:summary`)\n- `kpis.wape_ets` = 27.4% (`kpi:summary`)\n- `kpis.bias_seasonal_naive` = 0.21% (`kpi:summary`)\n- `kpis.bias_ets` = 27.2% (`kpi:summary`)\n- `kpis.value_at_risk_total` = $510,101 (`kpi:summary`)\n- `kpis.exception_count` = 176 (`kpi:summary`)\n- `kpis.fill_rate_proxy` = 99.76% (`kpi:summary`)\n- `kpis.capacity_peak_utilisation` = 100.0% (`kpi:summary`)\n- `planted.detected_count` = 3/3 (`planted`)\n- `scenario.intake_shocked_over_baseline` = 0.70 (`scn:harvest_shortfall`)\n- `planning_year_actual_cases` = 251,691 (`planning_year_actual_cases`)\n- `mean_bulk_cover` = 19.9 (`mean_bulk_cover`)\n- `mean_allocation_ratio` = 96.9% (`mean_allocation_ratio`)\n- `accuracy_hierarchy.B03.seasonal_naive.bias` = 25.1% (`acc:brand:seasonal_naive:B03:nan:nan`)\n- `accuracy_hierarchy.B03.seasonal_naive.wape` = 25.1% (`acc:brand:seasonal_naive:B03:nan:nan`)\n- `value_register.P1` = $276,627 (`val:planted:P1`)\n- `value_register.other` = $207,712 (`val:planted:other`)\n- `value_register.P2` = $16,368 (`val:planted:P2`)\n- `value_register.P3` = $9,395 (`val:planted:P3`)\n- `value_register.BIAS` = $0 (`val:planted:BIAS`)\n- `exceptions.type.harvest_shortfall` = 25 (`exc:type:harvest_shortfall`)\n- `exceptions.type.bulk_cover` = 113 (`exc:type:bulk_cover`)\n- `exceptions.type.allocation_shortfall` = 5 (`exc:type:allocation_shortfall`)\n- `exceptions.type.bottled_cover` = 2 (`exc:type:bottled_cover`)\n- `exceptions.type.capacity_loss` = 4 (`exc:type:capacity_loss`)\n- `exceptions.type.capacity_utilisation` = 26 (`exc:type:capacity_utilisation`)\n- `exceptions.type.forecast_bias` = 1 (`exc:type:forecast_bias`)\n- `exceptions.P2.min_allocation_ratio` = 65.7% (`exc:EXC0139`)"
+}

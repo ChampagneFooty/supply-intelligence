@@ -1,0 +1,111 @@
+company: Vintara Estates
+litres_per_case: 9.0
+planning_year: 2026
+prior_year: 2025
+history_weeks: 52
+planning_weeks: 52
+forecast_weeks: 13
+
+tiers:
+  luxury:
+    asp_per_case: 280
+    target_service_level: 0.98
+    safety_weeks: 4
+    bulk_cover_target_weeks: 14
+  masstige:
+    asp_per_case: 85
+    target_service_level: 0.95
+    safety_weeks: 3
+    bulk_cover_target_weeks: 12
+  commercial:
+    asp_per_case: 28
+    target_service_level: 0.92
+    safety_weeks: 2
+    bulk_cover_target_weeks: 10
+
+markets:
+  - { id: M_AU, name: Australia, country: AU, channel: retail, share: 0.25 }
+  - { id: M_US, name: United States, country: US, channel: on-premise, share: 0.30 }
+  - { id: M_UK, name: United Kingdom, country: GB, channel: retail, share: 0.20 }
+  - { id: M_EU, name: European Union, country: EU, channel: retail, share: 0.15 }
+  - { id: M_AS, name: Asia, country: AS, channel: travel, share: 0.10 }
+
+sites:
+  - { id: S_BAR, name: Barossa Cellar & Bottling, type: cellar_bottling, country: AU }
+  - { id: S_NAP, name: Napa Cellar & Bottling, type: cellar_bottling, country: US }
+  - { id: S_UKDC, name: UK Distribution Centre, type: dc, country: GB }
+
+vintages:
+  - { id: V2024, year: 2024, status: live, harvest_week: 12 }
+  - { id: V2025, year: 2025, status: live, harvest_week: 12 }
+  - { id: V2026, year: 2026, status: new_release, harvest_week: 12 }
+
+brands:
+  - id: B01
+    name: Vintara Reserve Shiraz
+    tier: luxury
+    region: Barossa
+    home_site: S_BAR
+    vintage_id: V2025
+    base_weekly_cases: 120
+    forecast_bias: 1.0
+  - id: B02
+    name: Vintara Estate Cabernet
+    tier: luxury
+    region: Napa Valley
+    home_site: S_NAP
+    vintage_id: V2025
+    base_weekly_cases: 110
+    forecast_bias: 1.0
+  - id: B03
+    name: Vintara Single Vineyard Chardonnay
+    tier: luxury
+    region: Barossa
+    home_site: S_BAR
+    vintage_id: V2026
+    base_weekly_cases: 90
+    forecast_bias: 1.25
+  - id: B04
+    name: Vintara Range Shiraz
+    tier: masstige
+    region: Barossa
+    home_site: S_BAR
+    vintage_id: V2025
+    base_weekly_cases: 500
+    forecast_bias: 1.0
+  - id: B05
+    name: Vintara Range Pinot
+    tier: masstige
+    region: Napa Valley
+    home_site: S_NAP
+    vintage_id: V2024
+    base_weekly_cases: 420
+    forecast_bias: 1.0
+  - id: B06
+    name: Vintara Range Sauvignon
+    tier: masstige
+    region: Adelaide Hills
+    home_site: S_BAR
+    vintage_id: V2025
+    base_weekly_cases: 450
+    forecast_bias: 1.0
+  - id: B07
+    name: Vintara House Red
+    tier: commercial
+    region: South Australia
+    home_site: S_BAR
+    vintage_id: V2024
+    base_weekly_cases: 1500
+    forecast_bias: 1.0
+  - id: B08
+    name: Vintara House White
+    tier: commercial
+    region: California
+    home_site: S_NAP
+    vintage_id: V2024
+    base_weekly_cases: 1400
+    forecast_bias: 1.0
+
+uk_transfer_lead_weeks: 4
+barossa_harvest_weeks: [10, 11, 12, 13, 14]
+napa_harvest_weeks: [32, 33, 34, 35, 36, 37, 38]

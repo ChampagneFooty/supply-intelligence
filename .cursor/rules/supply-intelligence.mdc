@@ -1,0 +1,6 @@
+---
+description: Vintara Supply Intelligence project rules for every chat in this repo.
+alwaysApply: true
+---
+
+Read `CLAUDE.md` before editing. Engine and pack already exist. Do not add agents, FastAPI, extra ML, or a chatbot. Do not edit `powerbi/Supply Intelligence.pbix` from the agent; Tim owns Desktop. Numbers come from `outputs/insight_pack.json` only. Synthetic $ at risk is a ranking figure, not a P&L. Not TWE brands.

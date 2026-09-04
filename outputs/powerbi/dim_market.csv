@@ -1,0 +1,6 @@
+id,name,country,channel,share
+M_AU,Australia,AU,retail,0.25
+M_US,United States,US,on-premise,0.3
+M_UK,United Kingdom,GB,retail,0.2
+M_EU,European Union,EU,retail,0.15
+M_AS,Asia,AS,travel,0.1

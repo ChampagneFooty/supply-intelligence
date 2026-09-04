@@ -1,0 +1,20 @@
+problems:
+  - id: P1
+    name: Harvest shortfall
+    site_id: S_BAR
+    planning_weeks: [10, 11, 12, 13, 14]
+    intake_factor: 0.70
+    catch: bulk_cover_and_luxury_allocation
+  - id: P2
+    name: UK luxury demand spike
+    brand_id: B01
+    market_id: M_UK
+    planning_weeks: [20, 21, 22, 23, 24]
+    demand_factor: 1.40
+    catch: allocation_and_service
+  - id: P3
+    name: Barossa bottling loss
+    site_id: S_BAR
+    planning_weeks: [32, 33, 34, 35]
+    capacity_factor: 0.65
+    catch: capacity_and_downstream_cover

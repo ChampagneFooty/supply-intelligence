@@ -1,0 +1,34 @@
+use_cases:
+  - id: UC1
+    name: Forecast accuracy
+    value: high
+    feasibility: high
+    rank: 1
+    status: delivered
+    note: Seasonal naive vs ETS, WAPE and bias by brand and market.
+  - id: UC2
+    name: Exception detection
+    value: high
+    feasibility: high
+    rank: 2
+    status: delivered
+    note: Cover, allocation and capacity rules on the weekly S&OP pack.
+  - id: UC3
+    name: Scenario analysis
+    value: high
+    feasibility: medium
+    rank: 3
+    status: next
+    note: Engine already runs harvest minus 30 percent. Product surface is Day 2.
+  - id: UC4
+    name: Allocation cockpit
+    value: medium
+    feasibility: medium
+    rank: 4
+    status: next
+  - id: UC5
+    name: Harvest-risk digital twin
+    value: high
+    feasibility: low
+    rank: 5
+    status: next

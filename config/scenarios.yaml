@@ -1,0 +1,7 @@
+demo:
+  id: harvest_shortfall
+  name: Barossa harvest minus 30 percent
+  site_id: S_BAR
+  planning_weeks: [10, 11, 12, 13, 14]
+  intake_factor: 0.70
+  metric_tolerance: 0.02

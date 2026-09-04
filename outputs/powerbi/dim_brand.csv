@@ -1,0 +1,9 @@
+id,name,tier,region,home_site,vintage_id,base_weekly_cases,forecast_bias
+B01,Vintara Reserve Shiraz,luxury,Barossa,S_BAR,V2025,120,1.0
+B02,Vintara Estate Cabernet,luxury,Napa Valley,S_NAP,V2025,110,1.0
+B03,Vintara Single Vineyard Chardonnay,luxury,Barossa,S_BAR,V2026,90,1.25
+B04,Vintara Range Shiraz,masstige,Barossa,S_BAR,V2025,500,1.0
+B05,Vintara Range Pinot,masstige,Napa Valley,S_NAP,V2024,420,1.0
+B06,Vintara Range Sauvignon,masstige,Adelaide Hills,S_BAR,V2025,450,1.0
+B07,Vintara House Red,commercial,South Australia,S_BAR,V2024,1500,1.0
+B08,Vintara House White,commercial,California,S_NAP,V2024,1400,1.0

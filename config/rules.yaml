@@ -1,0 +1,9 @@
+bulk_cover_exception_weeks: 14
+bottled_cover_exception_weeks: 4
+allocation_ratio_exception: 0.85
+capacity_utilisation_exception: 0.95
+wape_exception: 0.25
+bias_abs_exception: 0.15
+expected_fill_if_cover_breach: 0.70
+expected_fill_if_allocation_breach: 0.75
+expected_fill_if_capacity_breach: 0.80

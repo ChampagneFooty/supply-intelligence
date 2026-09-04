@@ -1,0 +1,4 @@
+id,name,type,country
+S_BAR,Barossa Cellar & Bottling,cellar_bottling,AU
+S_NAP,Napa Cellar & Bottling,cellar_bottling,US
+S_UKDC,UK Distribution Centre,dc,GB
