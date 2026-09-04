@@ -236,6 +236,42 @@ def _bar_chart(df: pd.DataFrame, x: str, y: str, title: str) -> None:
     st.altair_chart(_finish_chart(chart), width="stretch")
 
 
+def _network_positions(sites: list, brands: list, markets: list, *, compact: bool) -> dict[str, tuple[float, float]]:
+    pos: dict[str, tuple[float, float]] = {}
+    if not compact:
+        for i, site in enumerate(sites):
+            pos[site["id"]] = (0.0, 1.0 - i * (1.0 / max(len(sites) - 1, 1)))
+        for i, brand in enumerate(brands):
+            pos[brand["id"]] = (1.0, 1.0 - i * (1.0 / max(len(brands) - 1, 1)))
+        for i, market in enumerate(markets):
+            pos[market["id"]] = (2.0, 1.0 - i * (1.0 / max(len(markets) - 1, 1)))
+        return pos
+    n_sites = max(len(sites), 1)
+    n_markets = max(len(markets), 1)
+    for i, site in enumerate(sites):
+        pos[site["id"]] = ((i + 0.5) / n_sites, 1.0)
+    for i, brand in enumerate(brands):
+        col = 0 if i < 4 else 1
+        row = i % 4
+        pos[brand["id"]] = (0.08 if col == 0 else 0.55, 0.70 - row * 0.14)
+    for i, market in enumerate(markets):
+        pos[market["id"]] = ((i + 0.5) / n_markets, 0.05)
+    return pos
+
+
+def _network_label(kind: str, name: str, *, compact: bool) -> str:
+    if kind == "site":
+        return name.replace(" Cellar & Bottling", "").replace(" Distribution Centre", " DC")
+    if kind == "brand":
+        label = name.replace("Vintara ", "")
+        if compact:
+            label = label.replace("Single Vineyard ", "SV ")
+        return label
+    if compact:
+        return {"Australia": "AU", "United States": "US", "United Kingdom": "UK", "European Union": "EU"}.get(name, name)
+    return name
+
+
 def _supply_network_figure(
     network: dict,
     accuracy: pd.DataFrame,
@@ -246,6 +282,8 @@ def _supply_network_figure(
     brand_id: str,
     market_id: str,
     site_id: str,
+    *,
+    compact: bool = False,
 ) -> go.Figure:
     brands = network["brands"]
     markets = network["markets"]
@@ -253,14 +291,7 @@ def _supply_network_figure(
     brand_names = {b["id"]: b["name"] for b in brands}
     market_names = {m["id"]: m["name"] for m in markets}
     site_names = {s["id"]: s["name"] for s in sites}
-
-    pos: dict[str, tuple[float, float]] = {}
-    for i, site in enumerate(sites):
-        pos[site["id"]] = (0.0, 1.0 - i * (1.0 / max(len(sites) - 1, 1)))
-    for i, brand in enumerate(brands):
-        pos[brand["id"]] = (1.0, 1.0 - i * (1.0 / max(len(brands) - 1, 1)))
-    for i, market in enumerate(markets):
-        pos[market["id"]] = (2.0, 1.0 - i * (1.0 / max(len(markets) - 1, 1)))
+    pos = _network_positions(sites, brands, markets, compact=compact)
 
     brand_acc = pd.DataFrame()
     if not accuracy.empty:
@@ -310,11 +341,11 @@ def _supply_network_figure(
             {
                 "id": nid,
                 "kind": "site",
-                "label": site_names[nid].replace(" Cellar & Bottling", "").replace(" Distribution Centre", " DC"),
+                "label": _network_label("site", site_names[nid], compact=compact),
                 "x": pos[nid][0],
                 "y": pos[nid][1],
                 "color": _heat(exc),
-                "size": 22 if selected else 16,
+                "size": (26 if selected else 20) if compact else (22 if selected else 16),
                 "hover": "<br>".join(hover),
             }
         )
@@ -338,11 +369,11 @@ def _supply_network_figure(
             {
                 "id": nid,
                 "kind": "brand",
-                "label": brand_names[nid].replace("Vintara ", ""),
+                "label": _network_label("brand", brand_names[nid], compact=compact),
                 "x": pos[nid][0],
                 "y": pos[nid][1],
                 "color": _heat(exc),
-                "size": 20 if selected else 14,
+                "size": (24 if selected else 18) if compact else (20 if selected else 14),
                 "hover": "<br>".join(hover),
             }
         )
@@ -369,11 +400,11 @@ def _supply_network_figure(
             {
                 "id": nid,
                 "kind": "market",
-                "label": market_names[nid],
+                "label": _network_label("market", market_names[nid], compact=compact),
                 "x": pos[nid][0],
                 "y": pos[nid][1],
                 "color": _heat(exc),
-                "size": 20 if selected else 14,
+                "size": (24 if selected else 18) if compact else (20 if selected else 14),
                 "hover": "<br>".join(hover),
             }
         )
@@ -406,6 +437,33 @@ def _supply_network_figure(
         edge_x.extend([xa, xb, None])
         edge_y.extend([ya, yb, None])
 
+    if compact:
+        textpos = [
+            "bottom center" if n["kind"] in {"site", "market"} else "middle right" for n in nodes
+        ]
+        annotations = [
+            dict(x=0.5, y=1.16, text="SITES", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
+            dict(x=0.5, y=0.84, text="BRANDS", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
+            dict(x=0.5, y=0.18, text="MARKETS", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
+        ]
+        axis_x = dict(visible=False, range=[-0.02, 1.02])
+        axis_y = dict(visible=False, range=[-0.14, 1.22])
+        margins = dict(l=8, r=8, t=28, b=36)
+        height = 820
+        font_size = 10
+    else:
+        textpos = "middle right"
+        annotations = [
+            dict(x=0, y=1.08, text="SITES", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
+            dict(x=1, y=1.08, text="BRANDS", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
+            dict(x=2, y=1.08, text="MARKETS", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
+        ]
+        axis_x = dict(visible=False, range=[-0.15, 2.55])
+        axis_y = dict(visible=False, range=[-0.12, 1.12])
+        margins = dict(l=10, r=140, t=10, b=10)
+        height = 460
+        font_size = 11
+
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(
@@ -423,8 +481,9 @@ def _supply_network_figure(
             y=[n["y"] for n in nodes],
             mode="markers+text",
             text=[n["label"] for n in nodes],
-            textposition="middle right",
-            textfont=dict(color=IVORY, size=11, family="Source Sans 3"),
+            textposition=textpos,
+            textfont=dict(color=IVORY, size=font_size, family="Source Sans 3"),
+            cliponaxis=False,
             marker=dict(
                 size=[n["size"] for n in nodes],
                 color=[n["color"] for n in nodes],
@@ -437,20 +496,26 @@ def _supply_network_figure(
         )
     )
     fig.update_layout(
-        height=460,
-        margin=dict(l=10, r=140, t=10, b=10),
+        height=height,
+        margin=margins,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        xaxis=dict(visible=False, range=[-0.15, 2.55]),
-        yaxis=dict(visible=False, range=[-0.12, 1.12]),
+        xaxis=axis_x,
+        yaxis=axis_y,
+        dragmode=False,
         hoverlabel=dict(bgcolor=CHARCOAL, font_size=13, font_family="Source Sans 3", font_color=IVORY),
-        annotations=[
-            dict(x=0, y=1.08, text="SITES", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
-            dict(x=1, y=1.08, text="BRANDS", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
-            dict(x=2, y=1.08, text="MARKETS", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
-        ],
+        annotations=annotations,
     )
     return fig
+
+
+def _network_event_points(event) -> list:
+    sel = getattr(event, "selection", None) if event is not None else None
+    if isinstance(sel, dict):
+        return sel.get("points") or []
+    if sel is not None:
+        return getattr(sel, "points", None) or []
+    return []
 
 
 st.markdown(
@@ -547,6 +612,21 @@ st.markdown(
         font-weight: 700 !important;
         font-size: 1.22rem !important;
         border-bottom: 4px solid #B11F24 !important;
+    }
+    @media (max-width: 768px) {
+        .main .block-container { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+        div[data-testid="stElementContainer"]:has(.net-flag-desktop) + div { display: none !important; }
+        .hero h1 { font-size: 1.55rem !important; }
+    }
+    @media (min-width: 769px) {
+        div[data-testid="stElementContainer"]:has(.net-flag-mobile) + div { display: none !important; }
+    }
+    div[data-testid="stElementContainer"]:has(.net-flag-desktop),
+    div[data-testid="stElementContainer"]:has(.net-flag-mobile) {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        min-height: 0 !important;
     }
     </style>
     """.replace("CELLAR_URI", _CELLAR_URI),
@@ -684,33 +764,39 @@ with exec_tab:
     st.markdown("**Supply network**")
     st.caption(
         "Calculated graph of sites, brands and markets. Not a machine-learning cluster. "
-        "Hover a node for pack figures. Select a node, then slice to it."
+        "Hover or tap a node for pack figures, then slice to it."
     )
-    net_fig = _supply_network_figure(
-        network,
-        accuracy,
-        exc_slice,
-        val_slice,
-        alloc,
-        cap,
-        brand_id,
-        market_id,
-        site_id,
+    net_kwargs = dict(
+        network=network,
+        accuracy=accuracy,
+        exc_slice=exc_slice,
+        val_slice=val_slice,
+        alloc=alloc,
+        cap=cap,
+        brand_id=brand_id,
+        market_id=market_id,
+        site_id=site_id,
     )
-    net_event = st.plotly_chart(
-        net_fig,
+    chart_cfg = {"displayModeBar": False, "scrollZoom": False, "doubleClick": False}
+    st.markdown('<div class="net-flag-desktop"></div>', unsafe_allow_html=True)
+    net_wide = st.plotly_chart(
+        _supply_network_figure(**net_kwargs, compact=False),
         width="stretch",
         on_select="rerun",
         selection_mode="points",
         key="supply_network",
-        config={"displayModeBar": False},
+        config=chart_cfg,
     )
-    points = []
-    sel = getattr(net_event, "selection", None) if net_event is not None else None
-    if isinstance(sel, dict):
-        points = sel.get("points") or []
-    elif sel is not None:
-        points = getattr(sel, "points", None) or []
+    st.markdown('<div class="net-flag-mobile"></div>', unsafe_allow_html=True)
+    net_narrow = st.plotly_chart(
+        _supply_network_figure(**net_kwargs, compact=True),
+        width="stretch",
+        on_select="rerun",
+        selection_mode="points",
+        key="supply_network_mobile",
+        config=chart_cfg,
+    )
+    points = _network_event_points(net_wide) or _network_event_points(net_narrow)
     if points:
         pt = points[0]
         cd = pt.get("customdata") if isinstance(pt, dict) else getattr(pt, "customdata", None)
