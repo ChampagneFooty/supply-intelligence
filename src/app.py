@@ -46,12 +46,15 @@ SHOCKS = {
     },
 }
 
-RED = "#B11F24"
-CHARCOAL = "#2C3139"
-IVORY = "#F7F5F2"
-GOLD = "#C4A36A"
-STONE = "#8B909A"
-LEAF = "#5C6B5A"
+RED = "#8C1C2B"  # wine: calculated problem signal
+CHARCOAL = "#1F2328"  # ink
+IVORY = "#46505E"  # slate: neutral series on a light canvas
+GOLD = "#B08D57"
+STONE = "#B7BCC4"
+LEAF = "#5F7F63"
+PAPER = "#FFFFFF"
+GRID = "#ECEAE6"
+MUTED = "#6B7280"
 
 st.set_page_config(page_title="Vintara Supply Insights", layout="wide")
 
@@ -206,17 +209,32 @@ def _slice_frame(
 
 def _finish_chart(chart):
     return (
-        chart.configure(background="transparent")
+        chart.configure(background="transparent", padding={"left": 4, "right": 8, "top": 8, "bottom": 4})
         .configure_view(strokeWidth=0)
         .configure_axis(
-            gridColor="#3E4450",
-            domainColor="#5A616C",
-            labelColor="#C8C4BC",
-            titleColor=IVORY,
-            titleFont="Source Sans 3",
-            labelFont="Source Sans 3",
+            gridColor=GRID,
+            domain=False,
+            tickColor=GRID,
+            labelColor=MUTED,
+            titleColor=MUTED,
+            titleFont="Inter",
+            labelFont="Inter",
+            labelFontSize=12,
+            titleFontSize=12,
+            titleFontWeight=500,
+            labelLimit=260,
         )
-        .configure_legend(labelColor=IVORY, titleColor=IVORY, labelFont="Source Sans 3")
+        .configure_axisX(grid=False, tickCount=8)
+        .configure_legend(
+            labelColor=CHARCOAL,
+            titleColor=MUTED,
+            labelFont="Inter",
+            labelFontSize=12,
+            orient="top",
+            symbolType="stroke",
+            symbolStrokeWidth=3,
+            labelLimit=260,
+        )
     )
 
 
@@ -233,27 +251,57 @@ def _line_chart(df: pd.DataFrame, x: str, y: str, color: str | None, title: str)
         encode["color"] = alt.Color(
             f"{color}:N",
             title="",
-            scale=alt.Scale(range=[RED, GOLD, IVORY, LEAF, STONE]),
+            scale=alt.Scale(range=[RED, IVORY, GOLD, LEAF, "#7C8DB5", "#C97B63", "#9B7FB0", STONE]),
         )
-    chart = alt.Chart(df).mark_line(point=True).encode(**encode).properties(height=280).interactive()
+    chart = (
+        alt.Chart(df)
+        .mark_line(strokeWidth=2.5, interpolate="monotone")
+        .encode(**encode)
+        .properties(height=300)
+        .interactive()
+    )
     st.altair_chart(_finish_chart(chart), width="stretch")
 
 
-def _bar_chart(df: pd.DataFrame, x: str, y: str, title: str) -> None:
+def _bar_chart(df: pd.DataFrame, x: str, y: str, title: str, *, highlight_top: int = 1, worst: str = "high", fmt: str = ",.1f") -> None:
+    """Horizontal bars. The worst rows are wine; the rest are neutral so the problem stands out."""
     if df.empty:
         st.info("No rows in this slice.")
         return
-    chart = (
-        alt.Chart(df)
-        .mark_bar(color=RED)
-        .encode(
-            x=alt.X(f"{x}:Q", title=title),
-            y=alt.Y(f"{y}:N", sort="-x", title=""),
-            tooltip=list(df.columns),
-        )
-        .properties(height=max(160, 28 * len(df)))
+    data = df.copy()
+    ranked = data[x].rank(ascending=(worst == "low"), method="first")
+    data["_flag"] = ranked.le(highlight_top).map({True: "focus", False: "rest"})
+    base = alt.Chart(data).encode(
+        x=alt.X(f"{x}:Q", title=title, axis=alt.Axis(grid=True, gridColor=GRID)),
+        y=alt.Y(f"{y}:N", sort=alt.EncodingSortField(field=x, order="ascending" if worst == "low" else "descending"), title="", axis=alt.Axis(labelColor=CHARCOAL, labelFontSize=13)),
+        tooltip=[c for c in df.columns],
     )
+    bars = base.mark_bar(cornerRadiusEnd=3, height={"band": 0.62}).encode(
+        color=alt.Color("_flag:N", legend=None, scale=alt.Scale(domain=["focus", "rest"], range=[RED, STONE]))
+    )
+    labels = base.mark_text(align="left", dx=6, fontSize=12, font="Inter", color=CHARCOAL).encode(
+        text=alt.Text(f"{x}:Q", format=fmt)
+    )
+    chart = (bars + labels).properties(height=max(170, 38 * len(data)))
     st.altair_chart(_finish_chart(chart), width="stretch")
+
+
+def _kpi_card(label: str, value: str, note: str = "", *, tone: str = "") -> str:
+    return (
+        f'<div class="kpi {tone}"><div class="kpi-label">{label}</div>'
+        f'<div class="kpi-value">{value}</div><div class="kpi-note">{note}</div></div>'
+    )
+
+
+def _money_short(value) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return "—"
+    v = float(value)
+    if abs(v) >= 1_000_000:
+        return f"${v / 1_000_000:.2f}M"
+    if abs(v) >= 1_000:
+        return f"${v / 1_000:.0f}k"
+    return f"${v:,.0f}"
 
 
 def _network_positions(sites: list, brands: list, markets: list, *, compact: bool) -> dict[str, tuple[float, float]]:
@@ -332,7 +380,7 @@ def _supply_network_figure(
 
     def _heat(exc: pd.DataFrame) -> str:
         if exc.empty:
-            return IVORY
+            return "#C9CDD3"
         planted = {str(v) for v in exc["planted_id"].fillna("").astype(str) if str(v) not in {"", "nan"}}
         if planted & {"P1", "P2", "P3", "BIAS"}:
             return RED
@@ -462,9 +510,9 @@ def _supply_network_figure(
             "bottom center" if n["kind"] in {"site", "market"} else "middle right" for n in nodes
         ]
         annotations = [
-            dict(x=0.5, y=1.16, text="SITES", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
-            dict(x=0.5, y=0.84, text="BRANDS", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
-            dict(x=0.5, y=0.18, text="MARKETS", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
+            dict(x=0.5, y=1.16, text="SITES", showarrow=False, font=dict(color=MUTED, size=11, family="Inter"), xanchor="center"),
+            dict(x=0.5, y=0.84, text="BRANDS", showarrow=False, font=dict(color=MUTED, size=11, family="Inter"), xanchor="center"),
+            dict(x=0.5, y=0.18, text="MARKETS", showarrow=False, font=dict(color=MUTED, size=11, family="Inter"), xanchor="center"),
         ]
         axis_x = dict(visible=False, range=[-0.02, 1.02])
         axis_y = dict(visible=False, range=[-0.14, 1.22])
@@ -474,9 +522,9 @@ def _supply_network_figure(
     else:
         textpos = "middle right"
         annotations = [
-            dict(x=0, y=1.08, text="SITES", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
-            dict(x=1, y=1.08, text="BRANDS", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
-            dict(x=2, y=1.08, text="MARKETS", showarrow=False, font=dict(color=STONE, size=11), xanchor="center"),
+            dict(x=0, y=1.08, text="SITES", showarrow=False, font=dict(color=MUTED, size=11, family="Inter"), xanchor="center"),
+            dict(x=1, y=1.08, text="BRANDS", showarrow=False, font=dict(color=MUTED, size=11, family="Inter"), xanchor="center"),
+            dict(x=2, y=1.08, text="MARKETS", showarrow=False, font=dict(color=MUTED, size=11, family="Inter"), xanchor="center"),
         ]
         axis_x = dict(visible=False, range=[-0.15, 2.55])
         axis_y = dict(visible=False, range=[-0.12, 1.12])
@@ -490,7 +538,7 @@ def _supply_network_figure(
             x=edge_x,
             y=edge_y,
             mode="lines",
-            line=dict(width=1.2, color="rgba(196,163,106,0.35)"),
+            line=dict(width=1, color="rgba(70,80,94,0.16)"),
             hoverinfo="skip",
             showlegend=False,
         )
@@ -502,12 +550,12 @@ def _supply_network_figure(
             mode="markers+text",
             text=[n["label"] for n in nodes],
             textposition=textpos,
-            textfont=dict(color=IVORY, size=font_size, family="Source Sans 3"),
+            textfont=dict(color=CHARCOAL, size=font_size + 1, family="Inter"),
             cliponaxis=False,
             marker=dict(
                 size=[n["size"] for n in nodes],
                 color=[n["color"] for n in nodes],
-                line=dict(width=1.2, color=IVORY),
+                line=dict(width=2, color="#FFFFFF"),
             ),
             customdata=[[n["kind"], n["id"]] for n in nodes],
             hovertext=[n["hover"] for n in nodes],
@@ -523,7 +571,7 @@ def _supply_network_figure(
         xaxis=axis_x,
         yaxis=axis_y,
         dragmode=False,
-        hoverlabel=dict(bgcolor=CHARCOAL, font_size=13, font_family="Source Sans 3", font_color=IVORY),
+        hoverlabel=dict(bgcolor="#FFFFFF", bordercolor="#E5E2DC", font_size=13, font_family="Inter", font_color=CHARCOAL),
         annotations=annotations,
     )
     return fig
@@ -541,121 +589,139 @@ def _network_event_points(event) -> list:
 st.markdown(
     """
     <style>
-    .stApp { border-top: 3px solid #B11F24; background-color: #2C3139 !important; }
-    .stApp::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-        pointer-events: none;
-        background-image: url("CELLAR_URI");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        opacity: 0.08;
-    }
-    [data-testid="stAppViewContainer"],
-    [data-testid="stHeader"],
-    [data-testid="stMain"],
-    .stMain,
-    section.main,
-    .main .block-container {
-        background-color: transparent !important;
-        background-image: none !important;
-    }
-    [data-testid="stAppViewContainer"] > * {
-        position: relative;
-        z-index: 1;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
     html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"],
-    h1, h2, h3, h4, p, label, button, input {
-        font-family: "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif !important;
+    p, label, button, input, li, td, th, span, div {
+        font-family: "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
     }
-    .hero { margin: 0.4rem 0 1.4rem 0; }
-    .hero .eyebrow {
-        letter-spacing: 0.22em;
-        font-size: 0.72rem;
-        font-weight: 600;
-        color: #C8C4BC;
-        margin: 0 0 0.45rem 0;
+    .stApp { background: #F6F4F0 !important; }
+    [data-testid="stHeader"] { background: transparent !important; }
+    .main .block-container, [data-testid="stMainBlockContainer"] {
+        padding-top: 1.6rem !important; max-width: 1320px;
     }
+    h2, h3 { color: #1F2328 !important; font-weight: 650 !important; letter-spacing: -0.01em; }
+
+    /* Hero band */
+    .hero {
+        position: relative; overflow: hidden;
+        border-radius: 18px; padding: 30px 34px 26px 34px; margin: 0 0 18px 0;
+        background:
+          linear-gradient(115deg, rgba(48,10,18,0.94) 0%, rgba(110,22,38,0.88) 55%, rgba(140,28,43,0.70) 100%),
+          url("CELLAR_URI") center/cover no-repeat;
+        color: #FFFFFF;
+        box-shadow: 0 10px 30px rgba(60,12,22,0.18);
+    }
+    .hero .eyebrow { letter-spacing: 0.28em; font-size: 0.72rem; font-weight: 600; color: #E8D2B0; margin: 0 0 6px 0; }
     .hero h1 {
-        font-size: 2.15rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        line-height: 1.15;
-        margin: 0 0 0.7rem 0;
-        color: #F7F5F2;
+        font-family: "Playfair Display", Georgia, serif !important;
+        font-size: 2.4rem; font-weight: 700; line-height: 1.1; margin: 0 0 10px 0; padding: 0; color: #FFFFFF !important;
     }
-    .hero .rule { width: 56px; height: 2px; background: #B11F24; margin-bottom: 0.85rem; }
-    .hero .lede { color: #C8C4BC; font-size: 0.98rem; max-width: 46rem; margin: 0; }
-    .badge-calc {
-        background: #B11F24; color: #fff; padding: 3px 10px;
-        font-size: 11px; letter-spacing: 0.08em; font-weight: 600;
-        margin-right: 8px; text-transform: uppercase;
+    .hero .lede { color: rgba(255,255,255,0.82); font-size: 0.98rem; max-width: 52rem; margin: 0 0 14px 0; }
+    .hero .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip {
+        display: inline-block; padding: 4px 11px; border-radius: 999px; font-size: 0.72rem;
+        font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .chip-calc { background: #FFFFFF; color: #8C1C2B; }
+    .chip-ai { background: rgba(232,210,176,0.16); color: #E8D2B0; border: 1px solid rgba(232,210,176,0.55); }
+    .chip-slice { background: rgba(255,255,255,0.10); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.25); text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+    /* KPI cards */
+    .kpi-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin: 0 0 8px 0; }
+    .kpi-group { font-size: 0.68rem; letter-spacing: 0.16em; font-weight: 600; color: #6B7280; margin: 6px 0 8px 2px; text-transform: uppercase; }
+    .kpi {
+        background: #FFFFFF; border-radius: 14px; padding: 16px 18px 14px 18px;
+        border: 1px solid #ECE8E1; box-shadow: 0 1px 2px rgba(31,35,40,0.04), 0 6px 18px rgba(31,35,40,0.05);
+    }
+    .kpi.slice { background: #FBF6F2; border-color: #EBDCD3; }
+    .kpi-label { font-size: 0.74rem; color: #6B7280; font-weight: 500; margin-bottom: 6px; }
+    .kpi-value { font-size: 1.85rem; font-weight: 700; color: #1F2328; line-height: 1.1; letter-spacing: -0.02em; }
+    .kpi.good .kpi-value { color: #3F6B46; }
+    .kpi.alert .kpi-value { color: #8C1C2B; }
+    .kpi-note { font-size: 0.74rem; color: #8A9099; margin-top: 4px; min-height: 1em; }
+
+    /* Story cards */
+    .story {
+        background: #FFFFFF; border-radius: 14px; padding: 16px 16px 12px 16px; height: 100%;
+        border: 1px solid #ECE8E1; border-top: 4px solid #8C1C2B;
+        box-shadow: 0 6px 18px rgba(31,35,40,0.05);
+        min-height: 178px; margin-bottom: 8px;
+    }
+    .story.on { box-shadow: 0 0 0 2px #8C1C2B, 0 8px 22px rgba(140,28,43,0.18); }
+    .story .sid { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; color: #8C1C2B; }
+    .story .ok { float: right; font-size: 0.68rem; font-weight: 600; color: #3F6B46; background: #E8F1E9; padding: 2px 8px; border-radius: 999px; }
+    .story .miss { float: right; font-size: 0.68rem; font-weight: 600; color: #8C1C2B; background: #F7E4E6; padding: 2px 8px; border-radius: 999px; }
+    .story h4 { font-size: 1.02rem !important; font-weight: 650; color: #1F2328; margin: 8px 0 6px 0 !important; padding: 0 !important; }
+    .story p { font-size: 0.84rem; color: #5B6270; margin: 0; line-height: 1.45; }
+
+    /* Panels */
+    [data-testid="stVerticalBlockBorderWrapper"] h1 { font-size: 1.55rem !important; color: #8C1C2B !important; }
+    [data-testid="stVerticalBlockBorderWrapper"] h2 { font-size: 1.15rem !important; margin-top: 0.8rem !important; }
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        background: #FFFFFF; border-radius: 14px !important; border-color: #ECE8E1 !important;
+        box-shadow: 0 6px 18px rgba(31,35,40,0.05);
+    }
+    .section-title { font-size: 1.05rem; font-weight: 650; color: #1F2328; margin: 2px 0 2px 0; }
+    .section-sub { font-size: 0.82rem; color: #6B7280; margin: 0 0 8px 0; }
+    .stat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0 14px 0; }
+    .stat { background: #F8F6F2; border-radius: 10px; padding: 10px 12px; }
+    .stat b { display: block; font-size: 1.25rem; color: #1F2328; }
+    .stat span { font-size: 0.74rem; color: #6B7280; }
+
+    .human-gate {
+        border-left: 4px solid #B08D57; padding: 12px 16px; border-radius: 8px;
+        background: #FBF5EA; color: #4A3B22; margin-bottom: 14px;
     }
     .badge-ai {
-        background: transparent; color: #C4A36A; border: 1px solid #C4A36A;
-        padding: 2px 10px; font-size: 11px; letter-spacing: 0.08em;
-        font-weight: 600; text-transform: uppercase;
-    }
-    .human-gate {
-        border: 1px solid #B11F24; padding: 14px 16px;
-        background: #3A2A2C; color: #F7F5F2;
-    }
-    .slice-bar {
-        color: #C8C4BC; font-size: 0.88rem; letter-spacing: 0.04em;
-        margin: 0.85rem 0 1.1rem 0;
+        background: #FFFFFF; color: #8A6A35; border: 1px solid #B08D57; border-radius: 999px;
+        padding: 2px 10px; font-size: 11px; letter-spacing: 0.06em; font-weight: 600; text-transform: uppercase; margin-right: 8px;
     }
     .shock-now {
-        border: 1px solid #B11F24;
-        background: #3A2A2C;
-        color: #F7F5F2;
-        padding: 12px 14px;
-        margin: 0.4rem 0 1.1rem 0;
-        font-size: 0.92rem;
-        line-height: 1.45;
+        border-left: 4px solid #8C1C2B; border-radius: 8px; background: #FBF0F1; color: #4A1A22;
+        padding: 10px 14px; margin: 0.2rem 0 1rem 0; font-size: 0.9rem;
     }
-    div[data-testid="stMetric"] {
-        background: #242830; padding: 16px 16px 14px 16px;
-        border: 1px solid #3E4450;
+
+    /* Buttons */
+    .stButton > button {
+        border-radius: 10px !important; border: 1px solid #E2DDD5 !important; background: #FFFFFF !important;
+        color: #1F2328 !important; font-weight: 500 !important; font-size: 0.85rem !important;
+        transition: all .15s ease;
     }
-    div[data-testid="stMetric"] label { letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.72rem; }
-    h2, h3 { letter-spacing: 0.06em; }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-        letter-spacing: 0.14em;
-    }
+    .stButton > button:hover { border-color: #8C1C2B !important; color: #8C1C2B !important; }
+    .stButton > button[kind="primary"] { background: #8C1C2B !important; color: #FFFFFF !important; border-color: #8C1C2B !important; }
+
+    /* Tabs */
+    [data-testid="stTabs"] [role="tablist"] { gap: 6px; border-bottom: 1px solid #E5E1DA; margin-bottom: 10px; }
     [data-testid="stTab"] {
-        font-size: 1.12rem !important;
-        font-weight: 600 !important;
-        padding: 0.95rem 1.4rem 0.8rem 1.4rem !important;
-        color: #F7F5F2 !important;
-        border-bottom: 4px solid transparent !important;
+        font-size: 0.98rem !important; font-weight: 500 !important; color: #6B7280 !important;
+        padding: 0.7rem 1.1rem !important; border-bottom: 3px solid transparent !important;
     }
-    [data-testid="stTab"] p, [data-testid="stTab"] span {
-        font-size: inherit !important;
-        color: inherit !important;
-    }
-    [data-testid="stTab"][aria-selected="true"] {
-        color: #F7F5F2 !important;
-        font-weight: 700 !important;
-        font-size: 1.22rem !important;
-        border-bottom: 4px solid #B11F24 !important;
+    [data-testid="stTab"] p { font-size: inherit !important; color: inherit !important; }
+    [data-testid="stTab"][aria-selected="true"] { color: #8C1C2B !important; font-weight: 650 !important; border-bottom: 3px solid #8C1C2B !important; }
+    [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
+
+    /* Sidebar */
+    [data-testid="stSidebar"] { background: #FFFFFF !important; border-right: 1px solid #ECE8E1; }
+    [data-testid="stSidebar"] .side-title { font-size: 0.72rem; letter-spacing: 0.18em; font-weight: 700; color: #8C1C2B; }
+
+    /* Tables */
+    [data-testid="stDataFrame"] { border-radius: 12px; overflow: hidden; border: 1px solid #ECE8E1; }
+
+    @media (max-width: 900px) {
+        .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .hero h1 { font-size: 1.7rem; }
+        .hero { padding: 22px 20px; }
     }
     @media (max-width: 768px) {
         .main .block-container { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
         div[data-testid="stElementContainer"]:has(.net-flag-desktop) + div { display: none !important; }
-        .hero h1 { font-size: 1.55rem !important; }
     }
     @media (min-width: 769px) {
         div[data-testid="stElementContainer"]:has(.net-flag-mobile) + div { display: none !important; }
     }
     div[data-testid="stElementContainer"]:has(.net-flag-desktop),
     div[data-testid="stElementContainer"]:has(.net-flag-mobile) {
-        display: none !important;
-        height: 0 !important;
-        margin: 0 !important;
-        min-height: 0 !important;
+        display: none !important; height: 0 !important; margin: 0 !important; min-height: 0 !important;
     }
     </style>
     """.replace("CELLAR_URI", _CELLAR_URI),
@@ -693,7 +759,7 @@ forecast = _read_csv("fact_forecast.csv")
 bulk = _read_csv("fact_bulk_inventory.csv")
 
 with st.sidebar:
-    st.markdown("**PLANNING SLICE**")
+    st.markdown('<div class="side-title">PLANNING SLICE</div>', unsafe_allow_html=True)
     st.caption("Filters persist across views. Network KPIs stay at pack grain. Slice KPIs follow the selection.")
     shock_options = ["All", "P1", "P2", "P3", "BIAS"]
     st.selectbox("Planted shock", shock_options, key="shock")
@@ -741,64 +807,69 @@ slice_bits = [
     "all shocks" if shock == "All" else f"{shock} · {SHOCKS[shock]['title']}",
 ]
 
+slice_label = "  ·  ".join(slice_bits)
 st.markdown(
-    """
+    f"""
     <div class="hero">
-      <p class="eyebrow">VINTARA ESTATES</p>
-      <h1>SUPPLY INSIGHTS</h1>
-      <div class="rule"></div>
-      <p class="lede">
-        Fictional luxury wine group. Synthetic planning data.
-        Calculated figures are marked in red. Commentary is marked in gold and is not an approved action.
-      </p>
+      <p class="eyebrow">VINTARA ESTATES · S&amp;OP COCKPIT</p>
+      <h1>Supply Insights</h1>
+      <p class="lede">Fictional luxury wine group on synthetic planning data. Every number is calculated by the engine;
+      AI commentary is labelled and never executes a supply action.</p>
+      <div class="chips">
+        <span class="chip chip-calc">Calculated</span>
+        <span class="chip chip-ai">AI commentary</span>
+        <span class="chip chip-slice">{slice_label}</span>
+      </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
+
+detected = planted["detected_count"]
 st.markdown(
-    '<span class="badge-calc">Calculated</span><span class="badge-ai">AI commentary</span>',
+    '<div class="kpi-group">Network · full year &nbsp;&nbsp;|&nbsp;&nbsp; Current slice</div>'
+    '<div class="kpi-row">'
+    + _kpi_card("Planted problems detected", f"{detected}/3", "harvest · demand · bottling", tone="good" if detected == 3 else "alert")
+    + _kpi_card("Forecast error (naive)", _pct(kpis["wape_seasonal_naive"]), "WAPE · seasonal naive", tone="good")
+    + _kpi_card("Forecast error (ETS)", _pct(kpis["wape_ets"]), "naive wins on seasonal data")
+    + _kpi_card("Value at risk", _money_short(kpis["value_at_risk_total"]), "synthetic $, ranking only", tone="alert")
+    + _kpi_card("Exceptions in slice", f"{len(exc_slice):,}", f"of {len(exceptions):,} in the year", tone="slice")
+    + _kpi_card("Slice value at risk", _money_short(slice_risk), "follows the filters", tone="slice")
+    + "</div>",
     unsafe_allow_html=True,
 )
-st.markdown(f'<div class="slice-bar">{"  ·  ".join(slice_bits)}</div>', unsafe_allow_html=True)
-
-net1, net2, net3, net4, sl1, sl2 = st.columns(6)
-net1.metric("Planted detected", f"{planted['detected_count']}/3")
-net2.metric("Network naive WAPE", _pct(kpis["wape_seasonal_naive"]))
-net3.metric("Network ETS WAPE", _pct(kpis["wape_ets"]))
-net4.metric("Network $ at risk", _money(kpis["value_at_risk_total"]))
-sl1.metric("Exceptions in slice", f"{len(exc_slice):,}")
-sl2.metric("Slice $ at risk", _money(slice_risk))
 
 exec_tab, planner_tab, value_tab, brief_tab = st.tabs(
     ["Executive", "Planner", "Value & portfolio", "S&OP brief"]
 )
 
 with exec_tab:
-    st.subheader("Four planted stories")
-    st.caption(
-        "We planted four problems in the synthetic year. These are not live alerts. "
-        "Each button jumps the **planning slice** (weeks, and the site or brand/market that belongs to that story). "
-        "The exception table, network map colours in-slice, and slice $ at risk follow. "
-        "The four network KPIs at the top stay full-year. Use **Clear slice** in the sidebar to go back."
+    st.markdown('<div class="section-title">Planted stories</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-sub">Four problems were planted in the synthetic year. Click one to slice the whole cockpit to it.</div>',
+        unsafe_allow_html=True,
     )
     if shock in SHOCKS:
         meta_now = SHOCKS[shock]
         st.markdown(
-            f'<div class="shock-now"><strong>Slice is on {shock}.</strong> '
-            f"Filters are {meta_now['jump']}. Exception table and slice $ at risk follow this story. "
-            f"Network KPIs above stay full-year.</div>",
+            f'<div class="shock-now"><strong>Showing {shock}</strong> · {meta_now["jump"]}. '
+            f"Top-row network KPIs stay full-year. Use <b>Clear slice</b> in the sidebar to reset.</div>",
             unsafe_allow_html=True,
         )
-    for shock_id in ["P1", "P2", "P3", "BIAS"]:
+    story_cols = st.columns(4)
+    for col, shock_id in zip(story_cols, ["P1", "P2", "P3", "BIAS"]):
         meta = SHOCKS[shock_id]
-        detected = planted.get(shock_id, shock_id == "BIAS")
-        status = "Detected" if detected else "Missed"
+        found = planted.get(shock_id, shock_id == "BIAS")
         on_this = shock == shock_id
-        with st.container(border=True):
-            st.markdown(f"**{shock_id} · {status}** — {meta['title']}")
-            st.caption(meta["why"])
+        pill = '<span class="ok">Detected</span>' if found else '<span class="miss">Missed</span>'
+        with col:
+            st.markdown(
+                f'<div class="story{" on" if on_this else ""}"><span class="sid">{shock_id}</span>{pill}'
+                f'<h4>{meta["title"]}</h4><p>{meta["why"]}</p></div>',
+                unsafe_allow_html=True,
+            )
             st.button(
-                "On this story" if on_this else f"Jump slice · {meta['jump']}",
+                "Viewing" if on_this else "View this story",
                 width="stretch",
                 key=f"shock_jump_{shock_id}",
                 type="primary" if on_this else "secondary",
@@ -806,10 +877,109 @@ with exec_tab:
                 args=(shock_id,),
             )
 
-    st.markdown("**Supply network**")
-    st.caption(
-        "Calculated graph of sites, brands and markets. Not a machine-learning cluster. "
-        "Hover or tap a node for pack figures, then slice to it."
+    st.write("")
+    with st.container(border=True):
+        left, right = st.columns((1.6, 1), gap="large")
+        with left:
+            st.markdown('<div class="section-title">Barossa bulk wine cover: plan vs harvest −30%</div>'
+                        '<div class="section-sub">Weeks of cover. Shaded bands are the planted shock windows (P1 · P2 · P3). calc_id scn:harvest_shortfall</div>',
+                        unsafe_allow_html=True)
+            cover = pd.DataFrame()
+            if len(scenario) and "metric" in scenario.columns:
+                cover = scenario[(scenario["metric"] == "bulk_cover_weeks") & (scenario["year_index"] == 1)].copy()
+                cover = _slice_frame(
+                    cover,
+                    brand_id=brand_id,
+                    market_id="All",
+                    site_id=site_id if site_id != "All" else "S_BAR",
+                    week_range=(1, 52),
+                    shock="All",
+                    keep_unscoped=False,
+                )
+            if len(cover):
+                weekly = cover.groupby("planning_week", as_index=False)[["baseline", "shocked"]].mean()
+                weekly = weekly.melt("planning_week", var_name="series", value_name="weeks_of_cover")
+                weekly["series"] = weekly["series"].map({"baseline": "Plan", "shocked": "Harvest −30%"})
+                bands = pd.DataFrame(
+                    [
+                        {"shock": "P1", "start": 10, "end": 14},
+                        {"shock": "P2", "start": 20, "end": 24},
+                        {"shock": "P3", "start": 32, "end": 35},
+                    ]
+                )
+                band = (
+                    alt.Chart(bands)
+                    .mark_rect(opacity=0.10)
+                    .encode(
+                        x="start:Q",
+                        x2="end:Q",
+                        color=alt.Color(
+                            "shock:N",
+                            legend=None,
+                            scale=alt.Scale(domain=["P1", "P2", "P3"], range=[RED, GOLD, LEAF]),
+                        ),
+                    )
+                )
+                line = (
+                    alt.Chart(weekly)
+                    .mark_line(strokeWidth=3, interpolate="monotone")
+                    .encode(
+                        x=alt.X("planning_week:Q", title="Planning week"),
+                        y=alt.Y("weeks_of_cover:Q", title="Bulk cover (weeks)"),
+                        color=alt.Color(
+                            "series:N",
+                            title="",
+                            scale=alt.Scale(domain=["Plan", "Harvest −30%"], range=[IVORY, RED]),
+                        ),
+                        tooltip=["planning_week", "series", "weeks_of_cover"],
+                    )
+                )
+                st.altair_chart(_finish_chart((band + line).resolve_scale(color="independent").properties(height=330).interactive()), width="stretch")
+                st.caption(
+                    f"Harvest intake ratio on weeks 10–14, year 1 = **{pack['scenario']['intake_shocked_over_baseline']:.2f}** (network)."
+                )
+            else:
+                st.info("No harvest scenario rows in this slice.")
+        with right:
+            st.markdown(
+                '<div class="section-title">Network service</div><div class="section-sub">Full year, not re-sliced.</div>'
+                '<div class="stat-list">'
+                f'<div class="stat"><b>{_pct(kpis["fill_rate_proxy"], 1)}</b><span>Fill-rate proxy</span></div>'
+                f'<div class="stat"><b>{_pct(kpis["pct_bottled_below_cover"], 2)}</b><span>Bottled below 4-wk cover</span></div>'
+                f'<div class="stat"><b>{pack["mean_bulk_cover"]:.1f} wks</b><span>Mean bulk cover</span></div>'
+                f'<div class="stat"><b>{_pct(pack["mean_allocation_ratio"])}</b><span>Mean allocation ratio</span></div>'
+                "</div>",
+                unsafe_allow_html=True,
+            )
+            st.markdown('<div class="section-title">Inspect exception</div>', unsafe_allow_html=True)
+            if st.session_state.exception_id and not exc_slice.empty:
+                picked = exc_slice[exc_slice["exception_id"] == st.session_state.exception_id]
+                if picked.empty:
+                    st.caption("Selected exception is outside this slice.")
+                else:
+                    row = picked.iloc[0]
+                    st.write(
+                        f"**{row['exception_id']}** · {row['type']} · {row['severity']}  \n"
+                        f"{row['brand']} · {row['site']} · {row['market']} · week {int(row['planning_week']) if not _blank(row.get('planning_week')) else '—'}"
+                    )
+                    linked = value[value["exception_id"] == row["exception_id"]] if not value.empty else pd.DataFrame()
+                    if len(linked):
+                        vr = linked.iloc[0]
+                        st.write(
+                            f"Synthetic $ at risk: **{_money(vr['value_at_risk'])}**  \n"
+                            f"Action code: **{vr['recommended_action_code']}**  \n"
+                            f"{vr['calc_id']}"
+                        )
+                    if not _blank(row.get("brand_id")):
+                        st.button("Focus this brand", on_click=_set_brand, args=(row["brand_id"],))
+            else:
+                st.caption("Select a row in the table.")
+
+    st.write("")
+    st.markdown(
+        '<div class="section-title">Supply network</div>'
+        '<div class="section-sub">Sites → brands → markets. Red nodes carry a planted exception in this slice. Tap a node to slice to it.</div>',
+        unsafe_allow_html=True,
     )
     net_kwargs = dict(
         network=network,
@@ -866,101 +1036,10 @@ with exec_tab:
             on_click=_apply_network_pick,
         )
 
-    left, right = st.columns((1.4, 1))
-    with left:
-        st.markdown("**Barossa bulk cover — plan vs harvest −30%**")
-        st.caption("calc_id: scn:harvest_shortfall · hover to read a week")
-        cover = pd.DataFrame()
-        if len(scenario) and "metric" in scenario.columns:
-            cover = scenario[(scenario["metric"] == "bulk_cover_weeks") & (scenario["year_index"] == 1)].copy()
-            cover = _slice_frame(
-                cover,
-                brand_id=brand_id,
-                market_id="All",
-                site_id=site_id if site_id != "All" else "S_BAR",
-                week_range=(1, 52),
-                shock="All",
-                keep_unscoped=False,
-            )
-        if len(cover):
-            weekly = cover.groupby("planning_week", as_index=False)[["baseline", "shocked"]].mean()
-            weekly = weekly.melt("planning_week", var_name="series", value_name="weeks_of_cover")
-            weekly["series"] = weekly["series"].map({"baseline": "Plan", "shocked": "Harvest −30%"})
-            bands = pd.DataFrame(
-                [
-                    {"shock": "P1", "start": 10, "end": 14},
-                    {"shock": "P2", "start": 20, "end": 24},
-                    {"shock": "P3", "start": 32, "end": 35},
-                ]
-            )
-            band = (
-                alt.Chart(bands)
-                .mark_rect(opacity=0.16)
-                .encode(
-                    x="start:Q",
-                    x2="end:Q",
-                    color=alt.Color(
-                        "shock:N",
-                        legend=None,
-                        scale=alt.Scale(domain=["P1", "P2", "P3"], range=[RED, GOLD, LEAF]),
-                    ),
-                )
-            )
-            line = (
-                alt.Chart(weekly)
-                .mark_line(point=True)
-                .encode(
-                    x=alt.X("planning_week:Q", title="Planning week"),
-                    y=alt.Y("weeks_of_cover:Q", title="Bulk cover (weeks)"),
-                    color=alt.Color(
-                        "series:N",
-                        title="",
-                        scale=alt.Scale(domain=["Plan", "Harvest −30%"], range=[IVORY, RED]),
-                    ),
-                    tooltip=["planning_week", "series", "weeks_of_cover"],
-                )
-            )
-            st.altair_chart(_finish_chart((band + line).properties(height=300).interactive()), width="stretch")
-            st.caption(
-                f"Harvest intake ratio on weeks 10–14, year 1 = **{pack['scenario']['intake_shocked_over_baseline']:.2f}** (network)."
-            )
-        else:
-            st.info("No harvest scenario rows in this slice.")
-    with right:
-        st.markdown("**Network coverage**")
-        st.caption("These four stay at pack grain. They are not re-sliced.")
-        st.write(
-            f"Fill-rate proxy: **{_pct(kpis['fill_rate_proxy'], 2)}**  \n"
-            f"Bottled below 4-week cover: **{_pct(kpis['pct_bottled_below_cover'], 2)}**  \n"
-            f"Mean bulk cover: **{pack['mean_bulk_cover']:.1f} weeks**  \n"
-            f"Mean allocation ratio: **{_pct(pack['mean_allocation_ratio'])}**"
-        )
-        st.markdown("**Inspect exception**")
-        if st.session_state.exception_id and not exc_slice.empty:
-            picked = exc_slice[exc_slice["exception_id"] == st.session_state.exception_id]
-            if picked.empty:
-                st.caption("Selected exception is outside this slice.")
-            else:
-                row = picked.iloc[0]
-                st.write(
-                    f"**{row['exception_id']}** · {row['type']} · {row['severity']}  \n"
-                    f"{row['brand']} · {row['site']} · {row['market']} · week {int(row['planning_week']) if not _blank(row.get('planning_week')) else '—'}"
-                )
-                linked = value[value["exception_id"] == row["exception_id"]] if not value.empty else pd.DataFrame()
-                if len(linked):
-                    vr = linked.iloc[0]
-                    st.write(
-                        f"Synthetic $ at risk: **{_money(vr['value_at_risk'])}**  \n"
-                        f"Action code: **{vr['recommended_action_code']}**  \n"
-                        f"{vr['calc_id']}"
-                    )
-                if not _blank(row.get("brand_id")):
-                    st.button("Focus this brand", on_click=_set_brand, args=(row["brand_id"],))
-        else:
-            st.caption("Select a row in the table.")
-
-    st.markdown("**Exceptions in slice**")
-    st.caption("Click a row to inspect it. Sort any column.")
+    st.markdown(
+        '<div class="section-title">Exceptions in slice</div><div class="section-sub">Click a row to inspect it. Sort any column.</div>',
+        unsafe_allow_html=True,
+    )
     show_cols = [
         c
         for c in [
@@ -1058,7 +1137,7 @@ with planner_tab:
             if len(plan):
                 by_mkt = plan.groupby("market_id", as_index=False)["allocation_ratio"].mean()
                 by_mkt["market"] = by_mkt["market_id"].map(market_names)
-                _bar_chart(by_mkt[["market", "allocation_ratio", "market_id"]], "allocation_ratio", "market", "Mean allocation ratio")
+                _bar_chart(by_mkt[["market", "allocation_ratio", "market_id"]], "allocation_ratio", "market", "Mean allocation ratio", worst="low", fmt=".1%")
                 mcols = st.columns(len(by_mkt))
                 for col, (_, row) in zip(mcols, by_mkt.iterrows()):
                     col.button(
@@ -1145,7 +1224,7 @@ with value_tab:
             st.caption(f"Selected {st.session_state.exception_id}. Open Executive to inspect.")
         planted_val = val_slice.groupby(val_slice["planted_id"].replace("", "other"), as_index=False)["value_at_risk"].sum()
         planted_val = planted_val.rename(columns={"planted_id": "shock"})
-        _bar_chart(planted_val, "value_at_risk", "shock", "Synthetic $ at risk")
+        _bar_chart(planted_val, "value_at_risk", "shock", "Synthetic $ at risk", fmt="$,.0f")
 
     st.subheader("Supply AI portfolio")
     st.caption("What this proof of concept owns. Ranked in the pack, not a new metric.")
@@ -1168,6 +1247,7 @@ with brief_tab:
         st.warning("No cached brief yet. Run python -m src.briefing")
     else:
         st.caption(f"Mode: {brief.get('mode')} · {brief.get('generated_at')}")
-        st.markdown(brief.get("markdown") or "")
+        with st.container(border=True):
+            st.markdown(brief.get("markdown") or "")
         with st.expander("Source references"):
             st.dataframe(pd.DataFrame(brief.get("source_refs") or []), width="stretch", hide_index=True)
