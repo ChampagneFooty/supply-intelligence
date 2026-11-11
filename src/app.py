@@ -627,7 +627,7 @@ st.markdown(
     .chip-slice { background: rgba(255,255,255,0.10); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.25); text-transform: none; letter-spacing: 0; font-weight: 500; }
 
     /* KPI cards */
-    .kpi-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin: 0 0 8px 0; }
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 0 0 8px 0; }
     .kpi-group { font-size: 0.68rem; letter-spacing: 0.16em; font-weight: 600; color: #6B7280; margin: 6px 0 8px 2px; text-transform: uppercase; }
     .kpi {
         background: #FFFFFF; border-radius: 14px; padding: 16px 18px 14px 18px;
@@ -708,7 +708,6 @@ st.markdown(
     [data-testid="stDataFrame"] { border-radius: 12px; overflow: hidden; border: 1px solid #ECE8E1; }
 
     @media (max-width: 900px) {
-        .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .hero h1 { font-size: 1.7rem; }
         .hero { padding: 22px 20px; }
     }
